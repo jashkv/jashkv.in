@@ -1,39 +1,107 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOM fully loaded");
 
-    // Dark mode toggle functionality
-    const logo = document.querySelector('.logo');
-    let isDarkMode = false;
-    
-    // Check for saved user preference, if any
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        isDarkMode = true;
+    // Create and configure video background
+    const video = document.createElement('video');
+    video.id = 'background-video';
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.style.position = 'fixed';
+    video.style.top = '0';
+    video.style.left = '0';
+    video.style.width = '100%';
+    video.style.height = '100%';
+    video.style.objectFit = 'cover';
+    video.style.zIndex = '-1';
+    document.body.prepend(video);
+
+    // Create a main content wrapper if it doesn't exist
+    let mainContent = document.querySelector('.main-content');
+    if (!mainContent) {
+        mainContent = document.createElement('div');
+        mainContent.className = 'main-content';
+        // Move all body children (except video) into main content
+        Array.from(document.body.children).forEach(child => {
+            if (child !== video) {
+                mainContent.appendChild(child);
+            }
+        });
+        document.body.appendChild(mainContent);
     }
-    
-    // Toggle dark mode
+
+    // Add necessary styles for scrolling
+    const style = document.createElement('style');
+    style.textContent = `
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .main-content {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+        #background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Theme switching function
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            video.src = 'images/video1.mp4';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            video.src = 'images/video2.mp4';
+        }
+        
+        video.onloadeddata = () => {
+            video.style.display = 'block';
+        };
+        video.onerror = () => {
+            video.style.display = 'none';
+            console.error('Error loading video');
+        };
+    }
+
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+
+    // Logo click handler for theme toggle
+    const logo = document.querySelector('.logo');
     if (logo) {
         logo.addEventListener('click', () => {
-            isDarkMode = !isDarkMode;
-            if (isDarkMode) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-            }
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
         });
     }
 
-    // Smooth scrolling for navigation links
+    // Smooth scrolling for navigation with offset
     document.querySelectorAll('nav a').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
             const section = document.querySelector(this.getAttribute('href'));
             if (section) {
-                section.scrollIntoView({ behavior: 'smooth' });
+                const headerOffset = 60; // Adjust this value based on your header height
+                const elementPosition = section.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
             }
         });
     });
@@ -48,47 +116,47 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Work items data with local image paths
+    // Work items data
     const workItems = [
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'cloud',
             title: 'Microservices Architecture on AWS',
             description: 'Cloud Architecture'
         },
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'cicd',
             title: 'GitOps CI/CD Pipeline',
             description: 'CI/CD'
         },
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'kubernetes',
             title: 'Multi-Cloud Kubernetes Cluster',
             description: 'Kubernetes'
         },
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'automation',
             title: 'Infrastructure Automation Suite',
             description: 'Automation'
         },
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'cloud',
             title: 'Serverless Data Pipeline',
             description: 'Cloud Architecture'
         },
         {
-            image: './images/gitops.png', // Update with your local image path
+            image: './images/gitops.png',
             category: 'kubernetes',
             title: 'Service Mesh Implementation',
             description: 'Kubernetes'
         }
     ];
 
-    // Function to create work elements with error handling
+    // Function to create work elements
     function createWorkElement(item) {
         const div = document.createElement("div");
         div.className = `work-item ${item.category}`;
@@ -105,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return div;
     }
 
-    // Initialize works grid with error handling
+    // Initialize works grid
     function initializeWorks() {
         const worksGrid = document.querySelector(".works-grid");
         if (!worksGrid) {
@@ -121,62 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("✅ Work items loaded successfully.");
     }
 
-    // Filter works with smooth transitions
-    document.querySelectorAll('.filter-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const filter = button.getAttribute('data-filter');
-            
-            // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-
-            // Filter work items with fade effect
-            document.querySelectorAll('.work-item').forEach(item => {
-                item.style.opacity = '0';
-                item.style.transition = 'opacity 0.3s ease';
-
-                setTimeout(() => {
-                    if (filter === 'all' || item.classList.contains(filter)) {
-                        item.style.display = 'block';
-                        setTimeout(() => {
-                            item.style.opacity = '1';
-                        }, 50);
-                    } else {
-                        item.style.display = 'none';
-                    }
-                }, 300);
-            });
-        });
-    });
-
-    // Form submission with validation
-    const contactForm = document.querySelector('.contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Basic form validation
-            const formInputs = contactForm.querySelectorAll('input, textarea');
-            let isValid = true;
-            
-            formInputs.forEach(input => {
-                if (!input.value.trim()) {
-                    isValid = false;
-                    input.style.borderColor = '#ff0000';
-                } else {
-                    input.style.borderColor = '#ddd';
-                }
-            });
-
-            if (isValid) {
-                alert('Message sent successfully!');
-                contactForm.reset();
-            }
-        });
-    }
-
-    // Initialize works when the page loads
+    // Initialize works
     initializeWorks();
 });
